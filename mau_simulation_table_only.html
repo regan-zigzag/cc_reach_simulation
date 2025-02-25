@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAU 시뮬레이션</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        label { display: block; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin-top: 5px; }
+        button { margin-top: 15px; padding: 10px; width: 100%; background-color: blue; color: white; border: none; cursor: pointer; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; display: none; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>MAU 시뮬레이션</h2>
+        
+        <label>현재 MAU:</label>
+        <input type="number" id="initial_mau" value="3458785">
+        
+        <label>Carrying Capacity (CC):</label>
+        <input type="number" id="cc" value="3768087">
+        
+        <label>신규 유입 사용자 수 (NRU):</label>
+        <input type="number" id="nru" value="42961">
+        
+        <label>이탈률 (Churn Rates, 콤마로 구분):</label>
+        <input type="text" id="churn_rates" value="0.011,0.010,0.009,0.008">
+        
+        <button onclick="runSimulation()">실행</button>
+        
+        <h3>결과</h3>
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>이탈률 (%)</th>
+                    <th>99% CC 도달 일수</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        function simulateMAUConvergence(initialMAU, cc, nru, churnRate, maxDays = 365) {
+            let currentMAU = initialMAU;
+            for (let t = 0; t < maxDays; t++) {
+                currentMAU = currentMAU + nru - (currentMAU * churnRate);
+                if (Math.abs(currentMAU - cc) / cc < 0.01) {
+                    return t; // 99% 수렴
+                }
+            }
+            return maxDays;
+        }
+
+        function runSimulation() {
+            let initialMAU = parseInt(document.getElementById("initial_mau").value);
+            let cc = parseInt(document.getElementById("cc").value);
+            let nru = parseInt(document.getElementById("nru").value);
+            let churnRates = document.getElementById("churn_rates").value.split(',').map(Number);
+
+            let tbody = document.getElementById("results-table").querySelector("tbody");
+            tbody.innerHTML = "";
+
+            churnRates.forEach(churnRate => {
+                let daysToConverge = simulateMAUConvergence(initialMAU, cc, nru, churnRate);
+                tbody.innerHTML += `<tr><td>${(churnRate * 100).toFixed(2)}</td><td>${daysToConverge}</td></tr>`;
+            });
+
+            document.getElementById("results-table").style.display = "table";
+        }
+    </script>
+</body>
+</html>
